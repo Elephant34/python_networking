@@ -6,7 +6,7 @@ import socket
 from decouple import config
 
 HOST = config("HOST")
-PORT = config("PORT")
+PORT = config("PORT", cast=int)
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.connect((HOST, PORT))
