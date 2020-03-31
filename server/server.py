@@ -3,6 +3,7 @@ The main server script which will recieve and handel requests
 '''
 
 import socket
+from decouple import Config
 
 HOST = Config("HOST")
 PORT = Config("PORT")
