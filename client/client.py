@@ -3,10 +3,10 @@ The main client script to send requests to the server
 '''
 
 import socket
-from decouple import Config
+from decouple import config
 
-HOST = Config("HOST")
-PORT = Config("PORT")
+HOST = config("HOST")
+PORT = config("PORT")
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.connect((HOST, PORT))
