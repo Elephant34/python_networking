@@ -10,7 +10,13 @@ PORT = config("PORT", cast=int)
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.connect((HOST, PORT))
-    s.sendall(b'Hello, world')
-    data = s.recv(1024)
 
-print('Received', repr(data))
+    while True:
+        recieved_data = s.recv(1024)
+
+        if not recieved_data:
+            break
+        else:
+            print("Receieved: ", recieved_data.decode())
+
+print("connection closed")
