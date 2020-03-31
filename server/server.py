@@ -4,8 +4,8 @@ The main server script which will recieve and handel requests
 
 import socket
 
-HOST = ""
-PORT = "9876"
+HOST = Config("HOST")
+PORT = Config("PORT")
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.bind((HOST, PORT))
