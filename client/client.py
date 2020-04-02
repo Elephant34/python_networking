@@ -1,6 +1,6 @@
 '''
 A chat app client
-To be run with the server on local network
+To be run with the server on a local network
 '''
 import socket
 import threading
