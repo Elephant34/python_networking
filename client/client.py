@@ -15,10 +15,13 @@ class ChatApp(threading.Thread):
     The main GUI of the chat app client
     '''
 
-    def __init__(self):
+    def __init__(self, conn):
         '''
         Sets the thread
         '''
+
+        self.conn = conn
+
         threading.Thread.__init__(self)
         self.start()
     
@@ -73,16 +76,21 @@ class ChatApp(threading.Thread):
         Sends the message to the server
         '''
 
-        send = self.message.get().encode("utf-8")
+        send_data = self.message.get().encode("utf-8")
         self.message.set("")
 
+        send_data = format(len(send_data), "08d").encode("utf-8") + send_data
+
+        self.conn.sendall(send_data)
+
 def recieve_message(s):
-    full_msg = ""
-    while True:
-        msg = s.recv(2048)
-        if not msg:
-            break
-        full_msg += msg.decode("utf-8")
+    '''
+    Recieves a message from the server
+    '''
+    header = s.recv(8).decode("utf-8")
+    full_msg = s.recv(int(header)).decode("utf-8")
+    
+    return full_msg
 
 
 HOST = config("HOST")
@@ -93,7 +101,7 @@ if __name__ == "__main__":
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
-        app = ChatApp()
+        app = ChatApp(s)
 
         connected = False
 
@@ -115,7 +123,7 @@ if __name__ == "__main__":
                 if message == "__die__":
                     break
             
-                app.add_text(full_msg)
+                app.add_text(message)
 
     app.add_text("\nQuitting")
     sleep(3)

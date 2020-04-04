@@ -29,18 +29,128 @@ class Client(threading.Thread):
         '''
 
         global client_list
+        global messages
+        global COMMANDS
+
+        # Gets the client list and stops others using it
+        client_list_lock.acquire()
+        client_list.append(self)
+        # Allows other threads to get the client list again
+        client_list_lock.release()
+
+
+        print("New connection at: ", self.addr)
+
+        self.send_message("Please enter your name:", "Server")
+
+        self.username = self.recieve_message()
+        print(self.username)
+
+        while True:
+            msg = self.recieve_message()
+
+            if msg[:2] == "//":
+                # Test if the message is a server command
+                command = msg[2:]
+                if command not in COMMANDS:
+                    self.send_message("Sorry that command wasn't recognised", "Server")
+                    continue
+                else:
+                    if command == "kill":
+                        # kill the server
+                        # still need to work on this
+                        self.send_message("WIP- sorry XD", "Server")
+                        continue
+                    elif command == "quit":
+                        break
+                    elif command == "test":
+                        self.send_message("You are connected to the server", "Server")
+                        continue
+
+
+            messages_lock.acquire()
+            messages.append([msg, self.username])
+            messages_lock.release()
+
+        self.close()
+
+    def recieve_message(self):
+        '''
+        Recieves a message from the client
+        '''
+
+        header = self.conn.recv(8).decode("utf-8")
+        print(header)
+        full_msg = self.conn.recv(int(header)).decode("utf-8")
+        
+        return full_msg
     
-    def send_message(self, message):
+    def send_message(self, message, msg_from):
         '''
         sends a message to the client
         '''
 
+        send_data = "[{msg_from}] {message}".format(msg_from=msg_from, message=message)
+        send_data = format(len(send_data), "08d") + send_data
+        self.conn.sendall(send_data.encode("utf-8"))
 
+    def close(self):
+        '''
+        Closes the socket instances and ends the thread
+        '''
+
+        client_list_lock.acquire()
+        client_list.remove(self)
+        client_list_lock.release()
+
+        self.conn.close()
+
+        print("Connection closed at: ", self.addr)
+
+def message_spool():
+    '''
+    Sends out any new messages to all connected clients
+    '''
+    global messages
+
+    while True:
+
+        if messages:
+            messages_lock.acquire()
+            client_list_lock.acquire()
+            for msg, name in messages:
+                for client in client_list:
+                    client.send_message(msg, name)
+            messages = []
+            messages_lock.release()
+            client_list_lock.release()
 
 HOST = config("HOST")
 PORT = config("PORT", cast=int)
 
-condition = threading.Condition()
+COMMANDS = ("kill", "quit", "test")
+
+# Shared varibales have a lock so two threads don't read at the same time
+client_list_lock = threading.Lock()
 client_list = []
+
+messages_lock = threading.Lock()
 messages = []
 
+if __name__ == "__main__":
+
+    print("Sever started...")
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind((HOST, PORT))
+        s.listen(5)
+
+        threading.Thread(target=message_spool).start()
+
+        while True:
+            conn, addr = s.accept()
+
+            print("Serever listening...")
+
+            # Creates a new client
+            Client(conn, addr)
