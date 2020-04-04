@@ -114,13 +114,13 @@ if __name__ == "__main__":
 
         if connected:
             app.add_text("Successfully connected to server.")
-            app.add_text("Type 'quit' anytime to exit\n")
+            app.add_text("Type '//quit' anytime to exit\n")
 
 
             while True:
                 message = recieve_message(s)
 
-                if message == "__die__":
+                if message == "[Server] __die__":
                     break
             
                 app.add_text(message)

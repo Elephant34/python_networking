@@ -6,6 +6,7 @@ To be run on a local network accessed via client
 import socket
 import threading
 from decouple import config
+import os
 
 class Client(threading.Thread):
     '''
@@ -58,8 +59,7 @@ class Client(threading.Thread):
                 else:
                     if command == "kill":
                         # kill the server
-                        # still need to work on this
-                        self.send_message("WIP- sorry XD", "Server")
+                        kill_server()
                         continue
                     elif command == "quit":
                         break
@@ -80,7 +80,6 @@ class Client(threading.Thread):
         '''
 
         header = self.conn.recv(8).decode("utf-8")
-        print(header)
         full_msg = self.conn.recv(int(header)).decode("utf-8")
         
         return full_msg
@@ -124,6 +123,19 @@ def message_spool():
             messages = []
             messages_lock.release()
             client_list_lock.release()
+
+def kill_server():
+    global client_list
+
+    client_list_lock.acquire()
+    local_copy = client_list
+    client_list_lock.release()
+
+    for client in local_copy:
+        client.send_message("__die__", "Server")
+        client.close()
+    
+    os._exit(1)
 
 HOST = config("HOST")
 PORT = config("PORT", cast=int)
